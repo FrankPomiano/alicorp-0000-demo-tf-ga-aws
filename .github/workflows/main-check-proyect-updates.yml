@@ -60,7 +60,7 @@ jobs:
 
       - name: Initialize Terraform
         id: init
-        run: cd infra-as-code && terraform init --backend-config="bucket=belcorp-0001-demo-belde-s3-template-test-fpm"
+        run: cd infra-as-code && terraform init --backend-config="bucket=belcorp-0002-demo-belde-s3-template-test-fpm"
 
       - name: Validate syntax Terraform
         id: validate
@@ -114,7 +114,7 @@ jobs:
 
       - name: Initialize Terraform
         id: init
-        run: cd infra-as-code && terraform init --backend-config="bucket=belcorp-0001-demo-belde-s3-template-test-fpm"
+        run: cd infra-as-code && terraform init --backend-config="bucket=belcorp-0002-demo-belde-s3-template-test-fpm"
 
       - name: Terraform Apply
         run: |
