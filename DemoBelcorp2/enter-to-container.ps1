@@ -1,0 +1,1 @@
+﻿aws ecs execute-command --region us-east-2 --cluster alicorp-0000-demo-dev-cluster-for-dbt --task e79765ea7ccf48f5964ba66270dabbb9 --container alicorp-0000-demo-dev-task-definition-for-dbt-container --interactive --command powershell.exe

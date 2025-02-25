@@ -1,0 +1,61 @@
+name: "Build and push ECR"
+on:
+  repository_dispatch:
+    types: [code-build-and-push-event]
+    branches: [main]
+jobs:
+  docker-build-and-push-to-ecr:
+    name: Docker Build and Push to ECR
+    runs-on: windows-2022
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      ENV: dev
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.client_payload.ref }}
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE_ARN}}
+          role-session-name: ${{ env.AWS_IAM_ROLE_NAME }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build, Tag, and Push Image to Amazon ECR
+        id: build-push-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: alicorp-0000-demo-${{ env.ENV }}-images-repository
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          cd .\DemoBelcorp2
+          dir
+          docker build -f .\DemoBelcorp2\Dockerfile -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }} .
+          docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
+
+      #################################################
+      # call workflow deploy ecs code
+      #################################################
+  trigger-workflows-deploy-ecs-code:
+    name: Trigger Workflows deploy ecs code
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    needs: docker-build-and-push-to-ecr
+    steps:
+
+      - name: trigger deploy ecs code code event
+        uses: peter-evans/repository-dispatch@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          event-type: code-deploy-ecs-event
+          client-payload: '{"ref": "${{ github.ref }}", "sha": "${{ github.sha }}"}'
